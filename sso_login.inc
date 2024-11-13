@@ -19,11 +19,12 @@ function sso_user_login($edit, $account) {
 
   // Retrieve the current site URL and the configured other site URL.
   $current_site_url = rtrim(url('<front>', ['absolute' => TRUE]), '/');
-  $other_site_url = rtrim(config_get('sso.settings', 'other_site_url'), '/');
+  $other_site_url = rtrim(config_get('sso.settings', 'other_site_url') ?? '', '/');
 
   // If no other site URL is configured, abort.
   if (empty($other_site_url)) {
     watchdog('sso', 'Other site URL is not configured.', [], WATCHDOG_ERROR);
+    backdrop_set_message(t('Other site URL is not configured.'), 'error');
     return;
   }
 
@@ -102,9 +103,12 @@ function sso_process_login() {
  */
 function sso_initiate_cross_site_login($account) {
   // Retrieve other site URL and check if configured.
-  $other_site_url = rtrim(config_get('sso.settings', 'other_site_url'), '/');
+  $other_site_url = rtrim(config_get('sso.settings', 'other_site_url') ?? '', '/');
+
+  // If no other site URL is configured, abort.
   if (empty($other_site_url)) {
-    watchdog('sso', 'Other site URL is not configured for SSO login.', [], WATCHDOG_ERROR);
+    watchdog('sso', 'Other site URL is not configured.', [], WATCHDOG_ERROR);
+    backdrop_set_message(t('Other site URL is not configured.'), 'error');
     return;
   }
 
