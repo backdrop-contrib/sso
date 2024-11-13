@@ -1,10 +1,35 @@
-Backdrop SSO Module
+SSO Module
 ===================
-Backdrop SSO Module provides seamless Single Sign-On (SSO) functionality between multiple Backdrop CMS sites, enabling users to log in and out across sites with a single action. It also supports user masquerading across sites if the Masquerade module is enabled, allowing administrators to impersonate users on both sites simultaneously.
+The SSO Module provides seamless Single Sign-On (SSO) functionality between two Backdrop CMS sites, enabling users to log in and out across sites with a single action. It also supports cross-site user impersonation with the Masquerade module, allowing administrators to impersonate users on both sites simultaneously if enabled.
 
 Requirements
 ------------
-This module has no required dependencies. However, it supports cross-site user impersonation when used with the [Masquerade Module](https://github.com/backdrop-contrib/masquerade).
+This module requires that the userbase (user accounts) be identical on both sites for SSO to function correctly.
+
+To ensure the userbase is synchronized, you can configure both sites to share specific database tables related to users and sessions. Here’s an example configuration that can be added to your `settings.php` file to point certain tables on Site B to Site A's database:
+
+```php
+$databases['default']['default'] = array(
+  'database' => 'site_B_database',
+  'username' => 'site_B_username',
+  'password' => 'site_B_database_password_here',
+  'host' => 'localhost',
+  'driver' => 'mysql',
+  'charset' => 'utf8mb4',
+  'collation' => 'utf8mb4_general_ci',
+  'prefix' => array(
+    'default' => '',
+    'users' => 'site_A_database.',
+    'sessions' => 'site_A_database.',
+    'users_roles' => 'site_A_database.',
+    'realname' => 'site_A_database.',
+    'field_data_field_first_name' => 'site_A_database.',
+    'field_revision_field_first_name' => 'site_A_database.',
+    'field_data_field_last_name' => 'site_A_database.',
+    'field_revision_field_last_name' => 'site_A_database.',
+  ),
+);
+```
 
 Installation
 ------------
@@ -18,18 +43,18 @@ Installation
 Issues
 ------
 Report bugs and feature requests in the Issue Queue:
-https://github.com/backdrop-contrib/backdrop_sso/issues.
+https://github.com/backdrop-contrib/sso/issues.
 
 Current Maintainers
 -------------------
-- [Your Name](https://github.com/username)
+- [Alan Mels](https://github.com/alanmels)
 - Seeking additional maintainers
 
 Credits
 -------
-- Ported to Backdrop CMS by [Your Name](https://github.com/username).
+- Created for Backdrop CMS by [Alan Mels](https://github.com/alanmels).
 - Inspired by other SSO implementations and designed to work with the Backdrop Masquerade module.
-- Sponsored by [Your Organization](https://example.org).
+- Sponsored by [AltaGrade](https://www.altagrade.com).
 
 License
 -------
