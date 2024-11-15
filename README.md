@@ -54,7 +54,7 @@ Credits
 -------
 - Created for Backdrop CMS by [Alan Mels](https://github.com/alanmels).
 - Sponsored by [AltaGrade](https://www.altagrade.com).
-- This module is not a successor to the abandoned and deprecated Drupal module with the same namespace.
+- This module is not a successor to the abandoned and deprecated [Drupal module](https://www.drupal.org/project/sso) with the same namespace.
 
 We needed a simple solution to synchronize user sessions between just two websites
 
