@@ -56,8 +56,6 @@ Credits
 - Sponsored by [AltaGrade](https://www.altagrade.com).
 - This module is not a successor to the abandoned and deprecated [Drupal module](https://www.drupal.org/project/sso) with the same namespace.
 
-We needed a simple solution to synchronize user sessions between just two websites
-
 License
 -------
 This project is GPL v2 software. See the LICENSE.txt file in this directory for complete text.
