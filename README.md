@@ -53,8 +53,10 @@ Current Maintainers
 Credits
 -------
 - Created for Backdrop CMS by [Alan Mels](https://github.com/alanmels).
-- Inspired by other SSO implementations and designed to work with the Backdrop Masquerade module.
 - Sponsored by [AltaGrade](https://www.altagrade.com).
+- This module is not a successor to the abandoned and deprecated Drupal module with the same namespace.
+
+We needed a simple solution to synchronize user sessions between just two websites
 
 License
 -------
