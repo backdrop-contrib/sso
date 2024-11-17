@@ -1,152 +1,45 @@
 <?php
 
 /**
- * Implements hook_menu().
- * Adds the settings page and registers paths for login.
+ * Implements hook_config_info().
  */
-function sso_menu() {
-  $items = [];
-
-  // Register the settings page.
-  $items['admin/config/people/sso'] = [
-    'title' => 'SSO Settings',
-    'page callback' => 'backdrop_get_form',
-    'page arguments' => ['sso_settings_form'],
-    'access arguments' => ['administer site configuration'],
-    'type' => MENU_NORMAL_ITEM,
-    'description' => 'Configure the settings for Single Sign-On between sites.',
+function sso_config_info() {
+  return [
+    'sso.settings' => [
+      'label' => t('Single Sign-On Settings'),
+      'group' => t('SSO'),
+      'description' => t('Stores configuration settings for the Single Sign-On (SSO) module.'),
+    ],
   ];
-
-  // Register the /sso-login path.
-  $items['sso-login'] = [
-    'title' => 'SSO Login',
-    'page callback' => 'sso_process_login',
-    'access callback' => TRUE,
-    'type' => MENU_CALLBACK,
-  ];
-
-  return $items;
 }
 
+/**
+ * Implements hook_init().
+ * Check the sessions table for an existing valid session on page load.
+ */
 function sso_init() {
-  global $user;
+  if (user_is_logged_in()) {
+    return; // Skip if the user is already logged in.
+  }
 
-  // Validate the token if on /user/logout and an sso_token parameter is present.
-  if (current_path() == 'user/logout' && isset($_GET['sso_token'])) {
-    if ($user->uid == 0) {
-      watchdog('sso', 'User is already logged out. No need for SSO token validation.', [], WATCHDOG_NOTICE);
-      return;
+  // Retrieve the session ID from the Backdrop native cookie.
+  $cookie_name = session_name();
+  $sid = $_COOKIE[$cookie_name] ?? NULL;
+
+  if ($sid) {
+    // Look up the session in the sessions table.
+    $session = db_select('sessions', 's')
+      ->fields('s', ['uid', 'timestamp'])
+      ->condition('sid', $sid)
+      ->condition('timestamp', REQUEST_TIME - ini_get('session.gc_maxlifetime'), '>')
+      ->execute()
+      ->fetchAssoc();
+
+    if ($session && !empty($session['uid'])) {
+      $account = user_load($session['uid']); // Load the user account.
+      if ($account) {
+        user_login_finalize($account); // Log in the user.
+      }
     }
-
-    $token = $_GET['sso_token'];
-    $key = config_get('sso.settings', 'shared_secret_key');
-    $payload = sso_decode_logout_token($token, $key);
-
-    if ($payload && isset($payload->uid) && $payload->uid == $user->uid) {
-      watchdog('sso', 'Valid SSO token received on /user/logout for UID: ' . $payload->uid, [], WATCHDOG_NOTICE);
-      // Allow the logout to proceed.
-    } else {
-      watchdog('sso', 'Invalid or expired SSO token on /user/logout.', [], WATCHDOG_ERROR);
-      backdrop_goto('<front>'); // Redirect to homepage if token is invalid.
-    }
   }
-}
-
-/**
- * Includes the login and logout feature files.
- */
-include_once __DIR__ . '/sso_login.inc';
-include_once __DIR__ . '/sso_logout.inc';
-
-/**
- * Shared utility: Generates a secure token for cross-site login requests.
- */
-function sso_generate_token($account) {
-  $key = config_get('sso.settings', 'shared_secret_key');
-
-  if (empty($account->uid) || $account->uid == 0) {
-    watchdog('sso', 'Attempted to generate token for invalid user.', [], WATCHDOG_ERROR);
-    return false;
-  }
-
-  $header = json_encode(['alg' => 'HS256', 'typ' => 'JWT']);
-  $payload = json_encode([
-    'uid' => $account->uid,
-    'name' => $account->name,
-    'exp' => REQUEST_TIME + 300, // Token expires in 5 minutes.
-  ]);
-
-  $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
-  $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
-
-  $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $key, true);
-  $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-
-  return $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
-}
-
-/**
- * Shared utility: Decodes and verifies a JWT token.
- */
-function sso_decode_token($jwt, $key) {
-  $parts = explode('.', $jwt);
-  if (count($parts) !== 3) {
-    return false;
-  }
-
-  list($base64UrlHeader, $base64UrlPayload, $base64UrlSignature) = $parts;
-  $payload = json_decode(base64_decode(strtr($base64UrlPayload, '-_', '+/')), true);
-
-  $signatureProvided = base64_decode(strtr($base64UrlSignature, '-_', '+/'));
-  $signatureValid = hash_hmac('sha256', "$base64UrlHeader.$base64UrlPayload", $key, true);
-
-  if (!hash_equals($signatureValid, $signatureProvided)) {
-    return false;
-  }
-
-  if (isset($payload['exp']) && $payload['exp'] < REQUEST_TIME) {
-    return false;
-  }
-
-  return (object) $payload;
-}
-
-/**
- * Form callback for the SSO settings page.
- */
-function sso_settings_form($form, &$form_state) {
-  $shared_secret_key = config_get('sso.settings', 'shared_secret_key');
-
-  // Auto-generate a secret key if it doesn't exist.
-  if (empty($shared_secret_key)) {
-    $shared_secret_key = bin2hex(random_bytes(32));
-    config_set('sso.settings', 'shared_secret_key', $shared_secret_key);
-    backdrop_set_message(t('A new shared secret key was generated automatically.'));
-  }
-
-  $form['shared_secret_key'] = [
-    '#type' => 'textfield',
-    '#title' => t('Shared Secret Key'),
-    '#default_value' => $shared_secret_key,
-    '#description' => t('The shared secret key used for generating and verifying SSO tokens. This key must match exactly on both sites.'),
-  ];
-
-  $form['other_site_url'] = [
-    '#type' => 'textfield',
-    '#title' => t('Other Site URL'),
-    '#default_value' => config_get('sso.settings', 'other_site_url'),
-    '#description' => t('The URL of the other site for Single Sign-On (e.g., https://site-b.com for Site A or https://site-a.com for Site B).'),
-  ];
-
-  $form['#submit'][] = 'sso_settings_form_submit';
-
-  return system_settings_form($form);
-}
-
-/**
- * Custom submit handler for SSO settings form.
- */
-function sso_settings_form_submit($form, &$form_state) {
-  config_set('sso.settings', 'shared_secret_key', $form_state['values']['shared_secret_key']);
-  config_set('sso.settings', 'other_site_url', $form_state['values']['other_site_url']);
 }

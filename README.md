@@ -1,32 +1,39 @@
-SSO Module
+Single Sign-On (SSO) Module
 ===================
-The SSO Module provides seamless Single Sign-On (SSO) functionality between two Backdrop CMS sites, enabling users to log in and out across sites with a single action. It also supports cross-site user impersonation with the Masquerade module, allowing administrators to impersonate users on both sites simultaneously if enabled.
+The Single Sign-On (SSO) module enables seamless Single Sign-On functionality for Backdrop CMS installations across multiple subdomains of the same main domain. It leverages Backdrop's native session management to authenticate users across shared environments.
 
 Requirements
 ------------
-This module requires that the userbase (user accounts) be identical on both sites for SSO to function correctly.
+To ensure proper functionality, the following requirements must be met:
 
-To ensure the userbase is synchronized, you can configure both sites to share specific database tables related to users and sessions. Here’s an example configuration that can be added to your `settings.php` file to point certain tables on Site B to Site A's database:
+1. Shared User Tables:
+   - The users and sessions tables must be shared between the subdomains.
+   - This allows all subdomains to access the same user and session data.
+
+2. Cookie Domain Configuration:
+   - In the settings.php file for each subdomain, set the $cookie_domain variable to allow cookies to be shared across subdomains.
+   - Example: `$cookie_domain = '.example.com';`
+   - Replace `example.com` with your actual main domain.
+
+To ensure the userbase is synchronized, configure both sites to share specific database tables related to users and sessions. Here’s an example configuration that can be added to your `settings.php` file to point certain tables on a subdomain website to main domain website's database:
 
 ```php
 $databases['default']['default'] = array(
-  'database' => 'site_B_database',
-  'username' => 'site_B_username',
-  'password' => 'site_B_database_password_here',
+  'database' => 'subdomain_db',
+  'username' => 'username',
+  'password' => 'password',
   'host' => 'localhost',
   'driver' => 'mysql',
-  'charset' => 'utf8mb4',
-  'collation' => 'utf8mb4_general_ci',
   'prefix' => array(
     'default' => '',
-    'users' => 'site_A_database.',
-    'sessions' => 'site_A_database.',
-    'users_roles' => 'site_A_database.',
-    'realname' => 'site_A_database.',
-    'field_data_field_first_name' => 'site_A_database.',
-    'field_revision_field_first_name' => 'site_A_database.',
-    'field_data_field_last_name' => 'site_A_database.',
-    'field_revision_field_last_name' => 'site_A_database.',
+    'users' => 'main_domain_db.',
+    'sessions' => 'main_domain_db.',
+    'users_roles' => 'main_domain_db.',
+    'realname' => 'main_domain_db.',
+    'field_data_field_first_name' => 'main_domain_db.',
+    'field_revision_field_first_name' => 'main_domain_db.',
+    'field_data_field_last_name' => 'main_domain_db.',
+    'field_revision_field_last_name' => 'main_domain_db.',
   ),
 );
 ```
@@ -34,9 +41,6 @@ $databases['default']['default'] = array(
 Installation
 ------------
 - Install this module following Backdrop CMS’s standard instructions: https://docs.backdropcms.org/documentation/extend-with-modules.
-- Go to the configuration page at Administration > Configuration > People > SSO (admin/config/people/sso) and configure:
-  - **Shared Secret Key**: a secure key shared across sites to verify SSO tokens.
-  - **Other Site URL**: the URL of the linked site for SSO (e.g., `https://site-b.com`).
 - If the **Masquerade Module** is enabled, impersonating a user on one site will automatically impersonate the user on the second site.
 - Once configured, logging in or impersonating a user on one site will initiate a login on the other site.
 
@@ -48,12 +52,10 @@ https://github.com/backdrop-contrib/sso/issues.
 Current Maintainers
 -------------------
 - [Alan Mels](https://github.com/alanmels)
-- Seeking additional maintainers
 
 Credits
 -------
 - Created for Backdrop CMS by [Alan Mels](https://github.com/alanmels).
-- Inspired by other SSO implementations and designed to work with the Backdrop Masquerade module.
 - Sponsored by [AltaGrade](https://www.altagrade.com).
 
 License

@@ -1,6 +1,7 @@
-name = SSO
-description = Automatically logs users into Backdrop site B after authentication on Backdrop site A.
+name = Single Sign-On
+description = Enables Single Sign-On (SSO) across multiple Backdrop CMS websites with shared session management.
 backdrop = 1.x
+package = User Management
 configure = admin/config/people/sso
 type = module
 maintainers[alanmels] = Alan Mels
