@@ -6,16 +6,7 @@ Requirements
 ------------
 To ensure proper functionality, the following requirements must be met:
 
-1. Shared User Tables:
-   - The users and sessions tables must be shared between the subdomains.
-   - This allows all subdomains to access the same user and session data.
-
-2. Cookie Domain Configuration:
-   - In the settings.php file for each subdomain, set the $cookie_domain variable to allow cookies to be shared across subdomains.
-   - Example: `$cookie_domain = '.example.com';`
-   - Replace `example.com` with your actual main domain.
-
-To ensure the userbase is synchronized, configure both sites to share specific database tables related to users and sessions. Here’s an example configuration that can be added to your `settings.php` file to point certain tables on a subdomain website to main domain website's database:
+1. To ensure the userbase and sessions are synchronized across all subdomains, configure each site to share specific database tables related to users and sessions. Below is an example configuration that can be added to the `settings.php` file of each subdomain to point these tables to the main domain's database:
 
 ```php
 $databases['default']['default'] = array(
@@ -25,24 +16,43 @@ $databases['default']['default'] = array(
   'host' => 'localhost',
   'driver' => 'mysql',
   'prefix' => array(
-    'default' => '',
-    'users' => 'main_domain_db.',
-    'sessions' => 'main_domain_db.',
-    'users_roles' => 'main_domain_db.',
-    'realname' => 'main_domain_db.',
-    'field_data_field_first_name' => 'main_domain_db.',
-    'field_revision_field_first_name' => 'main_domain_db.',
-    'field_data_field_last_name' => 'main_domain_db.',
-    'field_revision_field_last_name' => 'main_domain_db.',
+    'default' => '', // Local tables for this subdomain.
+    'users' => 'main_domain_db.', // Shared user table.
+    'sessions' => 'main_domain_db.', // Shared sessions table.
+    'users_roles' => 'main_domain_db.', // Shared user roles table.
+    'realname' => 'main_domain_db.', // Shared real name data.
+    'field_data_field_first_name' => 'main_domain_db.', // Shared first name field.
+    'field_revision_field_first_name' => 'main_domain_db.', // Shared first name field revisions.
+    'field_data_field_last_name' => 'main_domain_db.', // Shared last name field.
+    'field_revision_field_last_name' => 'main_domain_db.', // Shared last name field revisions.
   ),
 );
+
 ```
+
+2. Cookie Domain Configuration:
+   - In the settings.php file for each subdomain, set the $cookie_domain variable to allow cookies to be shared across subdomains.
+   - Example: `$cookie_domain = '.example.com';`
+   - Replace `example.com` with your actual main domain.
 
 Installation
 ------------
-- Install this module following Backdrop CMS’s standard instructions: https://docs.backdropcms.org/documentation/extend-with-modules.
-- If the **Masquerade Module** is enabled, impersonating a user on one site will automatically impersonate the user on the second site.
-- Once configured, logging in or impersonating a user on one site will initiate a login on the other site.
+1. Place the SSO Module in the modules directory of your Backdrop CMS installation.
+2. Enable the module in the Backdrop CMS admin interface under Admin > Modules.
+3. Ensure the `settings.php` file for each subdomain is properly configured as described above.
+
+How It Works
+------------
+
+1. When a user logs in on one subdomain, Backdrop CMS creates a session entry in the shared `sessions` table and sets a session cookie.
+2. When the user accesses another subdomain:
+   - The session cookie is read and validated against the shared sessions table.
+   - If the session is valid, the user is automatically logged in.
+
+Known Limitations
+-----------------
+
+- This module does not support cross-domain SSO (e.g., between example.com and example.net). It works only across subdomains of the same main domain (e.g., sub1.example.com and sub2.example.com).
 
 Issues
 ------
