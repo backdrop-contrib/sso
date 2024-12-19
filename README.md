@@ -6,7 +6,10 @@ Requirements
 ------------
 To ensure proper functionality, the following requirements must be met:
 
-1. To ensure the userbase and sessions are synchronized across all subdomains, configure each site to share specific database tables related to users and sessions. Below is an example configuration that can be added to the `settings.php` file of each subdomain to point these tables to the main domain's database:
+1. To ensure the userbase and sessions are synchronized across all subdomains, configure each site to share specific database tables related to users and sessions. Below are example configurations that can be added to the `settings.php` file of each subdomain to point these tables to the main domain's database:
+
+<details>
+<summary>Backdrop CMS < 1.30.0 - Database settings example</summary>
 
 ```php
 $databases['default']['default'] = array(
@@ -29,6 +32,31 @@ $databases['default']['default'] = array(
 );
 
 ```
+</details>
+
+<details>
+<summary>Backdrop CMS >= 1.30.0 - Database settings example</summary>
+
+```php
+$database = array(
+  'database' => 'subdomain_db',
+  'username' => 'username',
+  'password' => 'password',
+  'host' => 'localhost',
+  'prefix' => array(
+    'default' => '', // Local tables for this subdomain.
+    'users' => 'main_domain_db.', // Shared user table.
+    'sessions' => 'main_domain_db.', // Shared sessions table.
+    'users_roles' => 'main_domain_db.', // Shared user roles table.
+    'realname' => 'main_domain_db.', // Shared real name data.
+    'field_data_field_first_name' => 'main_domain_db.', // Shared first name field.
+    'field_revision_field_first_name' => 'main_domain_db.', // Shared first name field revisions.
+    'field_data_field_last_name' => 'main_domain_db.', // Shared last name field.
+    'field_revision_field_last_name' => 'main_domain_db.', // Shared last name field revisions.
+  ),
+);
+```
+</details>
 
 2. Cookie Domain Configuration:
    - In the settings.php file for each subdomain, set the $cookie_domain variable to allow cookies to be shared across subdomains.
